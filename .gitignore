@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Pipeline output
+output/
+*.zim
+*.part
+
+# Streamlit
+.streamlit/
+
+# OS
+.DS_Store
