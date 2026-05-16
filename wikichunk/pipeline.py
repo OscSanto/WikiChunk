@@ -210,7 +210,14 @@ class WikiChunker:
 
         # Mark run as complete
         done_path.write_text(
-            json.dumps({"completed": time.strftime("%Y-%m-%dT%H:%M:%S"), **stats}) + "\n"
+            json.dumps({
+                "completed":      time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "strategy":       self.strategy,
+                "chunk_size":     self.chunk_size,
+                "chunk_overlap":  self.chunk_overlap,
+                "min_chunk_size": self.min_chunk_size,
+                **stats,
+            }) + "\n"
         )
 
         self._print_summary(stats, time.time() - t0, chunks_path, skipped_path)
