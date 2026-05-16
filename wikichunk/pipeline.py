@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 from wikichunk.models import Chunk, SkippedItem
-from wikichunk.reader import iter_zim
+from wikichunk.reader import iter_zim, zim_article_count
 from wikichunk.cleaner import extract_sections
 from wikichunk.chunkers import SectionChunker, FlatChunker, ParagraphChunker
 
@@ -131,6 +131,7 @@ class WikiChunker:
         )
 
         t0 = time.time()
+        total_entries = zim_article_count(self.zim_path)
         file_mode = "a" if resuming else "w"
         print("Processing...")
 
@@ -199,14 +200,17 @@ class WikiChunker:
                 if n % self.tick_every == 0:
                     elapsed = time.time() - t0
                     rate    = n / elapsed if elapsed > 0 else 0
+                    eta     = (total_entries - n) / rate if rate > 0 else 0
+                    eta_s   = f"{int(eta//3600)}h{int(eta%3600//60)}m{int(eta%60)}s"
+                    pct     = 100 * n / total_entries if total_entries else 0
                     sys.stdout.write(
-                        f"\r  scanned {n:,}  |  "
+                        f"\r  {pct:5.1f}%  scanned {n:,}/{total_entries:,}  |  "
                         f"chunks {stats['chunks_produced']:,}  |  "
-                        f"{rate:.0f} art/s   "
+                        f"{rate:.0f} art/s  ETA {eta_s}   "
                     )
                     sys.stdout.flush()
                     if self.tick_cb:
-                        self.tick_cb(stats)
+                        self.tick_cb({**stats, "total": total_entries})
 
         # Mark run as complete
         done_path.write_text(

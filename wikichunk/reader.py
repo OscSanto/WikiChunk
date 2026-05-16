@@ -11,6 +11,12 @@ _SKIP_RE = re.compile(
 )
 
 
+def zim_article_count(zim_path: Path) -> int:
+    """Return the total entry count from the ZIM archive (fast, no iteration)."""
+    from libzim.reader import Archive
+    return Archive(str(zim_path)).article_count
+
+
 def iter_zim(zim_path: Path) -> Iterator[tuple[str | None, str, str, str | None]]:
     """
     Yield (html, path, title, skip_reason) for every entry in the ZIM file.
