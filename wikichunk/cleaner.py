@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, NavigableString, Tag
 from wikichunk.models import Section
 
 _HEADING_TAGS = {"h2", "h3", "h4", "h5", "h6"}
@@ -19,6 +19,24 @@ def _depth(tag_name: str) -> int:
 def _cls(tag: Tag, fragment: str) -> bool:
     """True if any CSS class on tag contains fragment."""
     return any(fragment in c for c in (tag.get("class") or []))
+
+
+_LIST_CONTAINERS = {"ul", "ol", "dl"}
+
+
+def _list_item_text(tag: Tag) -> str:
+    """Text of a list item excluding any nested sub-list text (avoids duplicates)."""
+    parts: list[str] = []
+    for child in tag.children:
+        if isinstance(child, NavigableString):
+            t = child.strip()
+            if t:
+                parts.append(t)
+        elif child.name not in _LIST_CONTAINERS:
+            t = child.get_text(" ", strip=True)
+            if t:
+                parts.append(t)
+    return " ".join(parts)
 
 
 def _infobox_to_sections(table: Tag) -> list[Section]:
@@ -182,7 +200,11 @@ def extract_sections(
             current_title = heading
             current_depth = _depth(name)
         else:
-            text = child.get_text(" ", strip=True)
+            text = (
+                _list_item_text(child)
+                if name in ("li", "dt", "dd")
+                else child.get_text(" ", strip=True)
+            )
             if text:
                 current_parts.append(text)
 
